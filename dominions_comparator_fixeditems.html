@@ -1,0 +1,2662 @@
+<html lang="en"><head>
+    <meta charset="UTF-8">
+    <title>Loading Dominions Comparator...</title>
+</head>
+<body>
+
+<template id="app-template">
+    <!-- The entire application HTML now lives inside this template tag -->
+    
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Dominions 6 Crafting Comparator w/ Boosters</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                margin: 0;
+                padding: 20px;
+                background-color: #f4f4f4;
+                color: #333;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+            .container {
+                display: flex;
+                width: 100%;
+                max-width: 1400px; /* Increased width */
+                gap: 20px;
+            }
+            .column {
+                background-color: #fff;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            }
+            .mage-column {
+                flex: 1.5; /* Give mage column more relative space */
+            }
+            .item-column {
+                flex: 2;
+            }
+            h2, h3, h4 {
+                color: #333;
+                border-bottom: 1px solid #eee;
+                padding-bottom: 10px;
+                margin-top: 15px;
+            }
+            h4 { margin-top: 10px; font-size: 1.1em; border-bottom: none; }
+            label {
+                display: inline-block;
+                margin-right: 5px;
+                width: 20px; /* For path labels F, A, etc. */
+                font-weight: bold;
+            }
+            input[type="text"], input[type="number"], select {
+                padding: 8px;
+                margin-bottom: 10px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                box-sizing: border-box;
+            }
+            input[type="number"] {
+                width: 60px;
+            }
+            button {
+                background-color: #5cb85c;
+                color: white;
+                padding: 10px 15px;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 1em;
+                margin-top: 10px;
+            }
+            button:hover {
+                background-color: #4cae4c;
+            }
+            .remove-mage-btn, #itemManagementTable button, .equip-button, .unequip-button, .remove-pick-btn, .remove-template-btn {
+                background-color: #d9534f;
+                padding: 5px 10px;
+                font-size: 0.9em;
+                margin-left: 10px;
+                margin-top: 0;
+            }
+            .remove-mage-btn:hover, #itemManagementTable button:hover, .equip-button:hover, .unequip-button:hover, .remove-pick-btn:hover, .remove-template-btn:hover {
+                background-color: #c9302c;
+            }
+            .equip-button, .save-template-btn, .add-template-btn { 
+                background-color: #5bc0de; 
+                padding: 5px 10px;
+                font-size: 0.9em;
+                margin-left: 10px;
+                margin-top: 0;
+            }
+            .equip-button:hover, .save-template-btn:hover, .add-template-btn:hover { background-color: #31b0d5; }
+            .add-template-btn { background-color: #5cb85c; }
+            .add-template-btn:hover { background-color: #4cae4c; }
+    
+            .path-input-group {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+                align-items: center;
+                margin-bottom:10px;
+            }
+            .path-input-group div {
+                display: flex;
+                align-items: center;
+            }
+            ul {
+                list-style-type: none;
+                padding: 0;
+            }
+            li.mage-entry, li.item-entry, li.equip-item-entry {
+                padding: 8px;
+                margin-bottom: 5px;
+                border-radius: 4px;
+                border: 1px solid #eee;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            li.mage-entry .mage-info {
+                flex-grow: 1;
+                margin-right: 10px;
+                display: flex;
+                flex-direction: column; /* Allow stacking of name and path info */
+                gap: 5px;
+            }
+            li.mage-entry .mage-info .mage-name-line { display: flex; align-items: center; gap: 10px; }
+            li.mage-entry .mage-info .mage-path-line { font-size: 0.9em; color: #555; }
+            li.mage-entry input[type="checkbox"] {
+                margin-right: 10px;
+            }
+            li.mage-entry .mage-actions {
+                display: flex;
+                align-items: center;
+            }
+            li.mage-entry.inactive .mage-info {
+                text-decoration: line-through;
+                color: #aaa;
+            }
+    
+            .item-entry.green { background-color: #d4edda; color: #155724; border-color: #c3e6cb; }
+            .item-entry.yellow { background-color: #fff3cd; color: #856404; border-color: #ffeeba; }
+            .item-entry.red { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+    
+            /* Modal Styles */
+            .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); }
+            .modal-content { background-color: #fefefe; margin: 3% auto; padding: 20px; border: 1px solid #888; width: 90%; max-width: 1300px; border-radius: 8px; max-height: 85vh; overflow-y: auto; }
+            .close-button { color: #aaa; float: right; font-size: 28px; font-weight: bold; }
+            .close-button:hover, .close-button:focus { color: black; text-decoration: none; cursor: pointer; }
+            #itemManagementTable, #mageTemplateTable { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            #itemManagementTable th, #itemManagementTable td, #mageTemplateTable th, #mageTemplateTable td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            #itemManagementTable th, #mageTemplateTable th { background-color: #f2f2f2; font-size: 0.9em; text-align: center; }
+            #itemManagementTable td:nth-child(2), #mageTemplateTable td:nth-child(1) { text-align: left; }
+            #itemManagementTable input[type="checkbox"], #mageTemplateTable input[type="checkbox"] { margin-right: 5px;}
+            #itemManagementTable input[type="text"] { width: 150px; margin-bottom:0;}
+            #itemManagementTable input[type="number"] { width: 40px; padding: 4px; margin-bottom:0; }
+            #mageTemplateTable td:nth-child(3) { text-align: right; } /* Align action buttons right */
+    
+    
+            .top-buttons {
+                width: 100%;
+                max-width: 1400px; /* Increased width */
+                margin-bottom: 20px;
+                text-align: right;
+            }
+            .top-buttons button { margin-left: 10px; }
+    
+            /* Equipment Section */
+            #equipItemsSection { margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px; }
+            #equipMageSelect { width: 100%; max-width: 300px; margin-bottom: 15px; }
+            .equipment-lists { display: flex; gap: 20px; }
+            .equipment-list { flex: 1; background-color: #f9f9f9; padding: 10px; border-radius: 5px; min-height: 100px; max-height: 300px; overflow-y: auto; border: 1px solid #eee;}
+            .equipment-list h4 { margin-top: 0; padding-bottom: 5px; font-size: 1em; }
+            .equip-item-entry span { font-size: 0.9em; flex-grow: 1; margin-right: 5px;}
+            .equip-item-entry .item-boosts { font-size: 0.8em; color: #31708f; margin-left: 5px; } /* Style for boosts */
+    
+            /* Random Pick Section Styles */
+            #randomPicksSection {
+                border: 1px solid #ccc;
+                padding: 15px;
+                margin-top: 15px;
+                border-radius: 5px;
+                background-color: #f9f9f9;
+            }
+            .random-pick-entry {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 15px;
+                align-items: center;
+                padding: 10px;
+                border-bottom: 1px solid #eee;
+            }
+            .random-pick-entry:last-child { border-bottom: none; }
+            .pick-controls, .pick-paths { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+            .pick-paths div { display: flex; align-items: center; }
+            .pick-paths label { font-weight: normal; font-size: 0.9em; width: auto; }
+            .pick-paths input[type="checkbox"] { margin-right: 3px; }
+        </style>
+    
+    
+        <div class="top-buttons">
+            <button id="manageMagesBtn">Mage Library</button>
+            <button id="manageItemsBtn">Manage Items</button>
+            <button id="saveStateBtn">Save State to File</button>
+        </div>
+    
+        <div class="container">
+            <div class="column mage-column">
+                <h2>Mage Management</h2>
+                <div>
+                    <label for="mageName" style="width:auto;">Mage Name:</label>
+                    <input type="text" id="mageName" placeholder="E.g., Archmage Bob">
+                </div>
+                <h3>Base Path Levels:</h3>
+                <div id="magePathInputsContainer" class="path-input-group"></div>
+                
+                <div style="margin-top: 15px;">
+                    <input type="checkbox" id="hasRandomPicksCheck" style="margin-right: 5px;">
+                    <label for="hasRandomPicksCheck" style="width: auto; font-weight: normal;">Has Random Path Picks?</label>
+                </div>
+                <div id="randomPicksSection" style="display: none;">
+                    <h4>Random Path Picks</h4>
+                    <div id="randomPicksContainer"></div>
+                    <button id="addRandomPickBtn" style="font-size: 0.9em; padding: 5px 10px; margin-top: 5px;">+ Add Pick</button>
+                </div>
+    
+                <button id="addMageBtn">Add Mage</button>
+    
+                <h3>Added Mages (Showing Effective Paths):</h3>
+                <ul id="magesList"></ul>
+    
+                <div id="equipItemsSection">
+                    <h3>Equip Items</h3>
+                    <select id="equipMageSelect"></select>
+                    <div class="equipment-lists">
+                        <div class="equipment-list">
+                            <h4>Available Items (Boosters)</h4>
+                            <ul id="availableItemsList"></ul>
+                        </div>
+                        <div class="equipment-list">
+                            <h4>Equipped Items</h4>
+                            <ul id="equippedItemsList"></ul>
+                        </div>
+                    </div>
+                </div>
+    
+            </div>
+            <div class="column item-column">
+                <h2>Active Item Crafting Status</h2>
+                <ul id="activeItemsList"></ul>
+            </div>
+        </div>
+    
+        <div id="itemModal" class="modal">
+            <div class="modal-content">
+                <span class="close-button" id="closeItemModalBtn">×</span>
+                <h2>Item Management</h2>
+                <h3>Add New Item</h3>
+                <div>
+                    <label for="newItemName" style="width:auto;">Item Name:</label>
+                    <input type="text" id="newItemName" placeholder="E.g., Starfall Doom">
+                </div>
+                <h4>Path Requirements &amp; Boosters:</h4>
+                <div id="newItemPathInputsContainer" class="path-input-group"></div>
+                <button id="addNewItemModalBtn">Add New Item</button>
+    
+                <h3>Existing Items</h3>
+                <table id="itemManagementTable">
+                    <thead>
+                        <tr>
+                            <th rowspan="2">Active</th><th rowspan="2">Name</th>
+                            <th colspan="2">F</th><th colspan="2">A</th><th colspan="2">W</th><th colspan="2">E</th><th colspan="2">S</th>
+                            <th colspan="2">D</th><th colspan="2">N</th><th colspan="2">B</th><th colspan="2">G</th><th colspan="2">H</th>
+                            <th rowspan="2">Action</th>
+                        </tr>
+                         <tr>
+                            <th>Req</th><th>Bst</th><th>Req</th><th>Bst</th><th>Req</th><th>Bst</th><th>Req</th><th>Bst</th><th>Req</th><th>Bst</th>
+                            <th>Req</th><th>Bst</th><th>Req</th><th>Bst</th><th>Req</th><th>Bst</th><th>Req</th><th>Bst</th><th>Req</th><th>Bst</th>
+                        </tr>
+                    </thead>
+                    <tbody id="itemManagementTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div id="mageLibraryModal" class="modal">
+            <div class="modal-content">
+                <span class="close-button" id="closeMageLibraryModalBtn">×</span>
+                <h2>Mage Library</h2>
+                <table id="mageTemplateTable">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Definition</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="mageTemplateTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <script>
+            // --- DATA STORE (DO NOT MODIFY MANUALLY) ---
+            const magesData = __MAGES_JSON_HERE__;
+            const itemsData = __ITEMS_JSON_HERE__;
+            const templatesData = __TEMPLATES_JSON_HERE__;
+    
+            // --- Application Logic ---
+            (function(mages, items, mageTemplates) {
+                // CONSTANTS
+                const PATH_KEYS = ['F', 'A', 'W', 'E', 'S', 'D', 'N', 'B', 'G', 'H'];
+    
+                // --- ID Management ---
+                let nextMageId = 0;
+                let nextItemId = 0;
+                let nextPickId = 0;
+    
+                document.addEventListener('DOMContentLoaded', () => {
+                    // This is the main execution block after the document is ready
+                    initializeApp();
+                });
+    
+                function initializeApp() {
+                    // Calculate next IDs based on loaded data to prevent duplicates
+                    nextMageId = (mages.reduce((maxId, mage) => Math.max(maxId, parseInt(mage.id.split('_')[1])), -1) + 1) || 0;
+                    nextItemId = (items.reduce((maxId, item) => Math.max(maxId, parseInt(item.id.split('_')[1])), -1) + 1) || 0;
+    
+                    // Generate outcomes for any random mages loaded from the file
+                    mages.forEach(mage => {
+                        mage.randomOutcomes = generateOutcomesFromPicks(mage.randomPicks || []);
+                    });
+                    
+                    // Wire up all event listeners
+                    setupEventListeners();
+                    
+                    // Create dynamic input fields
+                    createMagePathInputs(document.getElementById('magePathInputsContainer'), 'magePath');
+                    createItemPathInputs(document.getElementById('newItemPathInputsContainer'), 'newItem');
+                    
+                    // Initial render of all UI components
+                    renderMagesList();
+                    renderMageSelector();
+                    updateComparisonDisplay();
+                }
+    
+                // --- UTILITY AND HELPER FUNCTIONS ---
+                const deepClone = (obj) => JSON.parse(JSON.stringify(obj));
+                function getItemById(itemId) { return items.find(item => item.id === itemId); }
+                function getMageById(mageId) { return mages.find(mage => mage.id === mageId); }
+                
+                function createMagePathInputs(container, idPrefix) {
+                    container.innerHTML = '';
+                    PATH_KEYS.forEach(pathKey => {
+                        const div = document.createElement('div');
+                        const label = document.createElement('label');
+                        label.htmlFor = `${idPrefix}${pathKey}`;
+                        label.textContent = pathKey;
+                        const input = document.createElement('input');
+                        input.type = 'number';
+                        input.id = `${idPrefix}${pathKey}`;
+                        input.min = 0;
+                        input.value = 0;
+                        input.dataset.pathKey = pathKey;
+                        div.appendChild(label);
+                        div.appendChild(input);
+                        container.appendChild(div);
+                    });
+                }
+    
+                function createItemPathInputs(container, idPrefix) {
+                     container.innerHTML = '';
+                     PATH_KEYS.forEach(pathKey => {
+                        const div = document.createElement('div');
+                        const label = document.createElement('label');
+                        label.htmlFor = `${idPrefix}Path${pathKey}`;
+                        label.textContent = pathKey;
+                        const reqInput = document.createElement('input');
+                        reqInput.type = 'number';
+                        reqInput.id = `${idPrefix}Path${pathKey}`;
+                        reqInput.min = 0;
+                        reqInput.dataset.pathKey = pathKey;
+                        reqInput.placeholder = "Req";
+                        reqInput.style.width = '45px';
+                        const boostInput = document.createElement('input');
+                        boostInput.type = 'number';
+                        boostInput.id = `${idPrefix}Boost${pathKey}`;
+                        boostInput.min = 0;
+                        boostInput.dataset.pathKey = pathKey;
+                        boostInput.placeholder = "Bst";
+                        boostInput.style.width = '45px';
+                        boostInput.style.marginLeft = '5px';
+                        div.appendChild(label);
+                        div.appendChild(reqInput);
+                        div.appendChild(boostInput);
+                        container.appendChild(div);
+                    });
+                }
+    
+                // --- RANDOM PATH LOGIC ---
+                function generateOutcomesFromPicks(randomPicks) {
+                    if (!randomPicks || randomPicks.length === 0) {
+                        return [{ name: 'Base', probability: 100, paths: {} }];
+                    }
+                    let combinedOutcomes = [{ name: 'Base', probability: 1.0, paths: {} }];
+                    randomPicks.forEach(pick => {
+                        const { chance, level, paths: pathPool } = pick;
+                        if (pathPool.length === 0 || chance === 0 || level === 0) return;
+                        const pickChance = chance / 100.0;
+                        const noPickChance = 1.0 - pickChance;
+                        const singlePathChance = pickChance / pathPool.length;
+                        const newCombinedOutcomes = [];
+                        combinedOutcomes.forEach(existingOutcome => {
+                            if (noPickChance > 0.0001) {
+                                newCombinedOutcomes.push({
+                                    name: existingOutcome.name,
+                                    probability: existingOutcome.probability * noPickChance,
+                                    paths: { ...existingOutcome.paths }
+                                });
+                            }
+                            pathPool.forEach(pathKey => {
+                                const newPaths = { ...existingOutcome.paths };
+                                newPaths[pathKey] = (newPaths[pathKey] || 0) + level;
+                                const newName = `${existingOutcome.name === 'Base' ? '' : existingOutcome.name + ' & '}+${level}${pathKey}`;
+                                newCombinedOutcomes.push({
+                                    name: newName,
+                                    probability: existingOutcome.probability * singlePathChance,
+                                    paths: newPaths
+                                });
+                            });
+                        });
+                        combinedOutcomes = newCombinedOutcomes;
+                    });
+                    return combinedOutcomes
+                        .filter(o => o.probability > 0.0001)
+                        .map(outcome => ({
+                            name: outcome.name,
+                            probability: parseFloat((outcome.probability * 100).toFixed(2)),
+                            paths: outcome.paths
+                        })).sort((a,b) => b.probability - a.probability);
+                }
+    
+                // --- FORMATTING FUNCTIONS ---
+                function formatMageBasePaths(mage) {
+                    const pathString = PATH_KEYS
+                        .map(pk => (mage.paths[pk] || 0) > 0 ? `${pk}${mage.paths[pk]}` : '')
+                        .filter(p => p).join(' ');
+                    
+                    let randomsString = '';
+                    if(mage.randomPicks && mage.randomPicks.length > 0) {
+                        randomsString = mage.randomPicks.map(p => `+${p.level} [${p.paths.join('')}] ${p.chance}%`).join(', ');
+                    }
+                    return `${pathString}${randomsString ? ' (' + randomsString + ')' : ''}` || 'No paths';
+                }
+                
+                function getMageEffectivePaths(mage) {
+                    if (!mage) return {};
+                    const effectivePaths = { ...mage.paths };
+                    if (mage.randomOutcomes && mage.randomOutcomes.length > 0 && mage.selectedOutcomeIndex != null) {
+                        const selectedOutcome = mage.randomOutcomes[mage.selectedOutcomeIndex];
+                        if (selectedOutcome && selectedOutcome.paths) {
+                            PATH_KEYS.forEach(pathKey => {
+                                effectivePaths[pathKey] = (effectivePaths[pathKey] || 0) + (selectedOutcome.paths[pathKey] || 0);
+                            });
+                        }
+                    }
+                    (mage.equippedItems || []).forEach(itemId => {
+                        const item = getItemById(itemId);
+                        if (item && item.boosts) {
+                            PATH_KEYS.forEach(pathKey => {
+                                effectivePaths[pathKey] = (effectivePaths[pathKey] || 0) + (item.boosts[pathKey] || 0);
+                            });
+                        }
+                    });
+                    return effectivePaths;
+                }
+    
+                function formatMagePathString(mage) {
+                     const effectivePaths = getMageEffectivePaths(mage);
+                     const baseWithRandom = { ...mage.paths };
+                     if (mage.randomOutcomes && mage.randomOutcomes.length > 0 && mage.selectedOutcomeIndex != null) {
+                         const selectedOutcome = mage.randomOutcomes[mage.selectedOutcomeIndex];
+                         if(selectedOutcome && selectedOutcome.paths) {
+                             PATH_KEYS.forEach(pk => baseWithRandom[pk] = (baseWithRandom[pk] || 0) + (selectedOutcome.paths[pk] || 0));
+                         }
+                     }
+                     let pathString = PATH_KEYS.map(pk => {
+                         const base = baseWithRandom[pk] || 0;
+                         const effective = effectivePaths[pk] || 0;
+                         const boost = effective - base;
+                         if (effective > 0) {
+                             return `${pk}${effective}${boost > 0 ? `(+${boost})` : ''}`;
+                         }
+                         return '';
+                     }).filter(p => p).join(' ');
+                     return pathString || 'No paths';
+                }
+    
+                function formatItemBoosts(item) {
+                     if (!item || !item.boosts) return '';
+                     const boostStrings = PATH_KEYS
+                        .map(pk => (item.boosts[pk] || 0) > 0 ? `+${item.boosts[pk]}${pk}` : '')
+                        .filter(s => s)
+                        .join(' ');
+                     return boostStrings ? `(${boostStrings})` : '';
+                }
+                
+                function formatItemRequirements(item) {
+                    if (!item || !item.requirements) return 'None';
+                    return PATH_KEYS
+                        .map(pk => (item.requirements[pk] || 0) > 0 ? `${pk}${item.requirements[pk]}` : '')
+                        .filter(s => s)
+                        .join(' ') || 'None';
+                }
+    
+                // --- CORE RENDERING & LOGIC FUNCTIONS ---
+                function renderMagesList() {
+                    const magesList = document.getElementById('magesList');
+                    magesList.innerHTML = '';
+                    mages.forEach(mage => {
+                        const li = document.createElement('li');
+                        li.classList.add('mage-entry');
+                        li.dataset.mageId = mage.id;
+                        if (!mage.isActive) li.classList.add('inactive');
+                        const activeCheckbox = document.createElement('input');
+                        activeCheckbox.type = 'checkbox';
+                        activeCheckbox.checked = mage.isActive;
+                        activeCheckbox.classList.add('mage-active-checkbox');
+                        const mageInfoSpan = document.createElement('span');
+                        mageInfoSpan.classList.add('mage-info');
+                        const nameLineDiv = document.createElement('div');
+                        nameLineDiv.classList.add('mage-name-line');
+                        const nameSpan = document.createElement('span');
+                        nameSpan.textContent = mage.name;
+                        nameLineDiv.appendChild(nameSpan);
+                        if (mage.randomOutcomes && mage.randomOutcomes.length > 1) { // Only show dropdown if there's more than one outcome
+                            const select = document.createElement('select');
+                            select.classList.add('outcome-selector');
+                            select.dataset.mageId = mage.id;
+                            mage.randomOutcomes.forEach((outcome, index) => {
+                                const option = document.createElement('option');
+                                option.value = index;
+                                option.textContent = `${outcome.name} (${outcome.probability}%)`;
+                                select.appendChild(option);
+                            });
+                            select.value = mage.selectedOutcomeIndex || 0;
+                            nameLineDiv.appendChild(select);
+                        }
+                        mageInfoSpan.appendChild(nameLineDiv);
+                        const pathLineDiv = document.createElement('div');
+                        pathLineDiv.classList.add('mage-path-line');
+                        pathLineDiv.textContent = formatMagePathString(mage);
+                        mageInfoSpan.appendChild(pathLineDiv);
+                        const actionsDiv = document.createElement('div');
+                        actionsDiv.classList.add('mage-actions');
+                        const saveBtn = document.createElement('button');
+                        saveBtn.textContent = 'Save';
+                        saveBtn.classList.add('save-template-btn');
+                        const removeBtn = document.createElement('button');
+                        removeBtn.textContent = 'Remove';
+                        removeBtn.classList.add('remove-mage-btn');
+                        actionsDiv.appendChild(saveBtn);
+                        actionsDiv.appendChild(removeBtn);
+                        li.appendChild(activeCheckbox);
+                        li.appendChild(mageInfoSpan);
+                        li.appendChild(actionsDiv);
+                        magesList.appendChild(li);
+                    });
+                }
+    
+                function updateComparisonDisplay() {
+                    const activeItemsList = document.getElementById('activeItemsList');
+                    activeItemsList.innerHTML = '';
+                    items.filter(item => item.isActive).forEach(item => {
+                        const li = document.createElement('li');
+                        li.classList.add('item-entry');
+                        const craftability = checkItemCraftability(item);
+                        li.classList.add(craftability);
+                        const reqString = formatItemRequirements(item);
+                        const boostString = formatItemBoosts(item);
+                        li.textContent = `${item.name} ${boostString} (Reqs: ${reqString})`;
+                        activeItemsList.appendChild(li);
+                    });
+                    renderEquipmentForMage(document.getElementById('equipMageSelect').value);
+                }
+    
+                function checkItemCraftability(item) {
+                    const activeMages = mages.filter(m => m.isActive);
+                    if (activeMages.length === 0) return 'red';
+                    let canBeGreen = false;
+                    let canBeYellow = false;
+                    for (const mage of activeMages) {
+                        const effectivePaths = getMageEffectivePaths(mage);
+                        let meetsAllReqsForGreen = true;
+                        let hasAllRequiredPathsForYellow = true;
+                        let atLeastOnePathLowerForYellow = false;
+                        let itemHasRequirements = false;
+                        const baseWithRandom = { ...mage.paths };
+                        if (mage.randomOutcomes && mage.randomOutcomes.length > 0 && mage.selectedOutcomeIndex != null) {
+                            const selectedOutcome = mage.randomOutcomes[mage.selectedOutcomeIndex];
+                            if (selectedOutcome && selectedOutcome.paths) {
+                                PATH_KEYS.forEach(pk => baseWithRandom[pk] = (baseWithRandom[pk] || 0) + (selectedOutcome.paths[pk] || 0));
+                            }
+                        }
+                        for (const pathKey of PATH_KEYS) {
+                            const requiredLevel = item.requirements[pathKey] || 0;
+                            const mageLevel = effectivePaths[pathKey] || 0;
+                            if (requiredLevel > 0) {
+                                itemHasRequirements = true;
+                                if (mageLevel < requiredLevel) {
+                                    meetsAllReqsForGreen = false;
+                                    if ((baseWithRandom[pathKey] || 0) === 0) {
+                                        hasAllRequiredPathsForYellow = false;
+                                        break;
+                                    } else {
+                                         atLeastOnePathLowerForYellow = true;
+                                    }
+                                }
+                             }
+                        }
+                        if (!itemHasRequirements) {
+                           meetsAllReqsForGreen = true;
+                        }
+                        if (meetsAllReqsForGreen) {
+                            canBeGreen = true;
+                            break;
+                        }
+                         if (hasAllRequiredPathsForYellow && atLeastOnePathLowerForYellow) {
+                            canBeYellow = true;
+                        }
+                    }
+                    if (canBeGreen) return 'green';
+                    if (canBeYellow) return 'yellow';
+                    return 'red';
+                }
+    
+                function renderMageSelector() {
+                    const equipMageSelect = document.getElementById('equipMageSelect');
+                    const currentSelection = equipMageSelect.value;
+                    equipMageSelect.innerHTML = '<option value="">-- Select a Mage --</option>';
+                    mages.forEach(mage => {
+                        const option = document.createElement('option');
+                        option.value = mage.id;
+                        option.textContent = mage.name;
+                        equipMageSelect.appendChild(option);
+                    });
+                    if (getMageById(currentSelection)) {
+                        equipMageSelect.value = currentSelection;
+                    } else {
+                         renderEquipmentForMage(null);
+                    }
+                }
+    
+                function isBooster(item) {
+                     if (!item.boosts) return false;
+                     return PATH_KEYS.some(pk => (item.boosts[pk] || 0) > 0);
+                }
+    
+                function renderEquipmentForMage(mageId) {
+                    const availableItemsList = document.getElementById('availableItemsList');
+                    const equippedItemsList = document.getElementById('equippedItemsList');
+                    availableItemsList.innerHTML = '';
+                    equippedItemsList.innerHTML = '';
+                    const mage = getMageById(mageId);
+                    if (!mage) return;
+                    const equippedIds = new Set(mage.equippedItems || []);
+                    items.filter(item => isBooster(item)).forEach(item => {
+                        if (!item.isActive) return;
+                        const li = document.createElement('li');
+                        li.classList.add('equip-item-entry');
+                        li.dataset.itemId = item.id;
+                        const itemInfo = document.createElement('span');
+                        const boostsString = formatItemBoosts(item);
+                        itemInfo.textContent = `${item.name} `;
+                        if(boostsString) {
+                            const boostSpan = document.createElement('span');
+                            boostSpan.textContent = boostsString;
+                            boostSpan.classList.add('item-boosts');
+                            itemInfo.appendChild(boostSpan);
+                        }
+                        li.appendChild(itemInfo);
+                        if (equippedIds.has(item.id)) {
+                            const unequipBtn = document.createElement('button');
+                            unequipBtn.textContent = 'Unequip';
+                            unequipBtn.classList.add('unequip-button');
+                            li.appendChild(unequipBtn);
+                            equippedItemsList.appendChild(li);
+                        } else {
+                            const equipBtn = document.createElement('button');
+                            equipBtn.textContent = 'Equip';
+                            equipBtn.classList.add('equip-button');
+                            li.appendChild(equipBtn);
+                            availableItemsList.appendChild(li);
+                        }
+                    });
+                }
+    
+                function renderItemsTable() {
+                    const itemManagementTableBody = document.getElementById('itemManagementTableBody');
+                    itemManagementTableBody.innerHTML = '';
+                    items.forEach(item => {
+                        const row = document.createElement('tr');
+                        row.dataset.itemId = item.id;
+                        item.boosts = item.boosts || {};
+                        PATH_KEYS.forEach(pk => item.boosts[pk] = item.boosts[pk] || 0);
+                        const activeCell = document.createElement('td');
+                        const activeCheckbox = document.createElement('input');
+                        activeCheckbox.type = 'checkbox';
+                        activeCheckbox.checked = item.isActive;
+                        activeCheckbox.classList.add('item-active-checkbox');
+                        activeCell.appendChild(activeCheckbox);
+                        row.appendChild(activeCell);
+                        const nameCell = document.createElement('td');
+                        const nameInput = document.createElement('input');
+                        nameInput.type = 'text';
+                        nameInput.value = item.name;
+                        nameInput.dataset.type = 'name';
+                        nameCell.appendChild(nameInput);
+                        row.appendChild(nameCell);
+                        PATH_KEYS.forEach(pathKey => {
+                            const reqCell = document.createElement('td');
+                            const reqInput = document.createElement('input');
+                            reqInput.type = 'number';
+                            reqInput.min = 0;
+                            reqInput.value = item.requirements[pathKey] || 0;
+                            reqInput.dataset.pathKey = pathKey;
+                            reqInput.dataset.type = 'requirement';
+                            reqCell.appendChild(reqInput);
+                            row.appendChild(reqCell);
+                            const boostCell = document.createElement('td');
+                            const boostInput = document.createElement('input');
+                            boostInput.type = 'number';
+                            boostInput.min = 0;
+                            boostInput.value = item.boosts[pathKey] || 0;
+                            boostInput.dataset.pathKey = pathKey;
+                            boostInput.dataset.type = 'boost';
+                            boostCell.appendChild(boostInput);
+                            row.appendChild(boostCell);
+                        });
+                        const actionCell = document.createElement('td');
+                        const removeBtn = document.createElement('button');
+                        removeBtn.textContent = 'Remove';
+                        removeBtn.classList.add('remove-item-btn');
+                        actionCell.appendChild(removeBtn);
+                        row.appendChild(actionCell);
+                        itemManagementTableBody.appendChild(row);
+                    });
+                }
+    
+                function renderMageTemplateTable() {
+                    const mageTemplateTableBody = document.getElementById('mageTemplateTableBody');
+                    mageTemplateTableBody.innerHTML = '';
+                    mageTemplates.forEach((template, index) => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${template.name}</td>
+                            <td>${formatMageBasePaths(template)}</td>
+                            <td>
+                                <button class="add-template-btn" data-template-index="${index}">Add to Active</button>
+                                <button class="remove-template-btn" data-template-index="${index}">Remove</button>
+                            </td>
+                        `;
+                        mageTemplateTableBody.appendChild(row);
+                    });
+                }
+                
+                function saveMageAsTemplate(mageId) {
+                    const mage = getMageById(mageId);
+                    if (!mage) return;
+                    const template = {
+                        name: mage.name,
+                        paths: deepClone(mage.paths),
+                        randomPicks: deepClone(mage.randomPicks || [])
+                    };
+                    mageTemplates.push(template);
+                    alert(`Saved "${mage.name}" to the library.`);
+                    if (document.getElementById('mageLibraryModal').style.display === 'block') {
+                        renderMageTemplateTable();
+                    }
+                }
+    
+                function addTemplateToActive(templateIndex) {
+                    const template = mageTemplates[templateIndex];
+                    if (!template) return;
+                    const newMage = {
+                        ...deepClone(template),
+                        id: `mage_${nextMageId++}`,
+                        isActive: true,
+                        equippedItems: [],
+                        selectedOutcomeIndex: 0,
+                        randomOutcomes: []
+                    };
+                    newMage.randomOutcomes = generateOutcomesFromPicks(newMage.randomPicks);
+                    mages.push(newMage);
+                    renderMagesList();
+                    updateComparisonDisplay();
+                    renderMageSelector();
+                }
+    
+                // --- EVENT LISTENERS ---
+                function setupEventListeners() {
+                    const UIElements = {
+                        addMageBtn: document.getElementById('addMageBtn'),
+                        magesList: document.getElementById('magesList'),
+                        hasRandomPicksCheck: document.getElementById('hasRandomPicksCheck'),
+                        addRandomPickBtn: document.getElementById('addRandomPickBtn'),
+                        randomPicksContainer: document.getElementById('randomPicksContainer'),
+                        equipMageSelect: document.getElementById('equipMageSelect'),
+                        equipItemsSection: document.getElementById('equipItemsSection'),
+                        manageItemsBtn: document.getElementById('manageItemsBtn'),
+                        closeItemModalBtn: document.getElementById('closeItemModalBtn'),
+                        itemModal: document.getElementById('itemModal'),
+                        addNewItemModalBtn: document.getElementById('addNewItemModalBtn'),
+                        itemManagementTableBody: document.getElementById('itemManagementTableBody'),
+                        manageMagesBtn: document.getElementById('manageMagesBtn'),
+                        closeMageLibraryModalBtn: document.getElementById('closeMageLibraryModalBtn'),
+                        mageLibraryModal: document.getElementById('mageLibraryModal'),
+                        mageTemplateTableBody: document.getElementById('mageTemplateTableBody'),
+                        saveStateBtn: document.getElementById('saveStateBtn')
+                    };
+
+                    UIElements.addMageBtn.addEventListener('click', () => {
+                        const name = document.getElementById('mageName').value.trim();
+                        if (!name) { alert('Please enter a mage name.'); return; }
+                        const paths = {};
+                        PATH_KEYS.forEach(pathKey => {
+                            paths[pathKey] = parseInt(document.getElementById(`magePath${pathKey}`).value) || 0;
+                        });
+                        const newMage = { id: `mage_${nextMageId++}`, name, paths, isActive: true, equippedItems: [], randomPicks: [], randomOutcomes: [], selectedOutcomeIndex: 0 };
+                        if (UIElements.hasRandomPicksCheck.checked) {
+                            const pickEntries = UIElements.randomPicksContainer.querySelectorAll('.random-pick-entry');
+                            pickEntries.forEach(entry => {
+                                const chance = parseInt(entry.querySelector('.pick-chance').value) || 100;
+                                const level = parseInt(entry.querySelector('.pick-level').value) || 1;
+                                const pickedPaths = [];
+                                entry.querySelectorAll('.pick-paths input[type="checkbox"]:checked').forEach(checkbox => {
+                                    pickedPaths.push(checkbox.dataset.pathKey);
+                                });
+                                if (pickedPaths.length > 0) {
+                                    newMage.randomPicks.push({ chance, level, paths: pickedPaths });
+                                }
+                            });
+                            newMage.randomOutcomes = generateOutcomesFromPicks(newMage.randomPicks);
+                        }
+                        mages.push(newMage);
+                        document.getElementById('mageName').value = '';
+                        PATH_KEYS.forEach(pathKey => { document.getElementById(`magePath${pathKey}`).value = 0; });
+                        UIElements.hasRandomPicksCheck.checked = false;
+                        document.getElementById('randomPicksSection').style.display = 'none';
+                        UIElements.randomPicksContainer.innerHTML = '';
+                        renderMagesList();
+                        updateComparisonDisplay();
+                        renderMageSelector();
+                    });
+    
+                    UIElements.magesList.addEventListener('click', (event) => {
+                        const target = event.target;
+                        const liElement = target.closest('li.mage-entry');
+                        const mageId = liElement?.dataset.mageId;
+                        if (!mageId) return;
+                        if (target.classList.contains('save-template-btn')) {
+                            saveMageAsTemplate(mageId);
+                        } else if (target.classList.contains('remove-mage-btn')) {
+                            const mageIndex = mages.findIndex(m => m.id === mageId);
+                            if (mageIndex === -1) return;
+                            const selectedMageId = UIElements.equipMageSelect.value;
+                            mages.splice(mageIndex, 1);
+                            renderMagesList();
+                            updateComparisonDisplay();
+                            renderMageSelector();
+                            if (selectedMageId === mageId) {
+                                UIElements.equipMageSelect.value = "";
+                                renderEquipmentForMage(null);
+                            }
+                        }
+                    });
+    
+                    UIElements.magesList.addEventListener('change', (event) => {
+                        const target = event.target;
+                        const liElement = target.closest('li.mage-entry');
+                        const mageId = liElement?.dataset.mageId;
+                        if (!mageId) return;
+                        const mage = getMageById(mageId);
+                        if (!mage) return;
+                        if (target.classList.contains('mage-active-checkbox')) {
+                            mage.isActive = target.checked;
+                            liElement.classList.toggle('inactive', !mage.isActive);
+                            updateComparisonDisplay();
+                        } else if (target.classList.contains('outcome-selector')) {
+                            mage.selectedOutcomeIndex = parseInt(target.value, 10);
+                            liElement.querySelector('.mage-path-line').textContent = formatMagePathString(mage);
+                            updateComparisonDisplay();
+                        }
+                    });
+                    
+                    UIElements.hasRandomPicksCheck.addEventListener('change', () => {
+                        document.getElementById('randomPicksSection').style.display = UIElements.hasRandomPicksCheck.checked ? 'block' : 'none';
+                        if (!UIElements.hasRandomPicksCheck.checked) UIElements.randomPicksContainer.innerHTML = '';
+                    });
+
+                    UIElements.addRandomPickBtn.addEventListener('click', () => {
+                        const pickId = `pick_${nextPickId++}`;
+                        const entry = document.createElement('div');
+                        entry.classList.add('random-pick-entry');
+                        entry.id = pickId;
+                        entry.innerHTML = `
+                            <div class="pick-controls">
+                                <span>Chance: <input type="number" class="pick-chance" value="100" min="0" max="100" style="width: 60px;">%</span>
+                                <span>Level: +<input type="number" class="pick-level" value="1" min="1" style="width: 50px;"></span>
+                            </div>
+                            <div class="pick-paths">
+                                <span>Path Pool:</span>
+                                ${PATH_KEYS.map(pk => `
+                                    <div>
+                                        <input type="checkbox" id="${pickId}_${pk}" data-path-key="${pk}"><label for="${pickId}_${pk}">${pk}</label>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <button class="remove-pick-btn" type="button">X</button>
+                        `;
+                        UIElements.randomPicksContainer.appendChild(entry);
+                    });
+                    UIElements.randomPicksContainer.addEventListener('click', (e) => {
+                        if (e.target.classList.contains('remove-pick-btn')) e.target.closest('.random-pick-entry').remove();
+                    });
+                    
+                    UIElements.equipMageSelect.addEventListener('change', (event) => renderEquipmentForMage(event.target.value));
+                    UIElements.equipItemsSection.addEventListener('click', (event) => {
+                        const target = event.target;
+                        const liElement = target.closest('li.equip-item-entry');
+                        const itemId = liElement?.dataset.itemId;
+                        const mageId = UIElements.equipMageSelect.value;
+                        if (!itemId || !mageId) return;
+                        const mage = getMageById(mageId);
+                        if (!mage) return;
+                        mage.equippedItems = mage.equippedItems || [];
+                        if (target.classList.contains('equip-button')) {
+                            if (!mage.equippedItems.includes(itemId)) mage.equippedItems.push(itemId);
+                        } else if (target.classList.contains('unequip-button')) {
+                            mage.equippedItems = mage.equippedItems.filter(id => id !== itemId);
+                        } else {
+                            return;
+                        }
+                        renderEquipmentForMage(mageId);
+                        renderMagesList();
+                        updateComparisonDisplay();
+                    });
+                    
+                    UIElements.manageItemsBtn.addEventListener('click', () => {
+                        renderItemsTable();
+                        UIElements.itemModal.style.display = 'block';
+                    });
+                    UIElements.closeItemModalBtn.addEventListener('click', () => {
+                        UIElements.itemModal.style.display = 'none';
+                        updateComparisonDisplay();
+                        renderMagesList();
+                    });
+                    UIElements.itemModal.addEventListener('click', (e) => {
+                        if (e.target === UIElements.itemModal) UIElements.closeItemModalBtn.click();
+                    });
+    
+                    UIElements.manageMagesBtn.addEventListener('click', () => {
+                        renderMageTemplateTable();
+                        UIElements.mageLibraryModal.style.display = 'block';
+                    });
+                    UIElements.closeMageLibraryModalBtn.addEventListener('click', () => UIElements.mageLibraryModal.style.display = 'none');
+                    UIElements.mageLibraryModal.addEventListener('click', e => {
+                         if(e.target === UIElements.mageLibraryModal) UIElements.mageLibraryModal.style.display = 'none';
+                    });
+                    UIElements.mageTemplateTableBody.addEventListener('click', (event) => {
+                        const target = event.target;
+                        const templateIndex = target.dataset.templateIndex;
+                        if (templateIndex === undefined) return;
+                        if(target.classList.contains('add-template-btn')) {
+                            addTemplateToActive(parseInt(templateIndex, 10));
+                        } else if(target.classList.contains('remove-template-btn')) {
+                            if (confirm('Are you sure you want to remove this template from the library?')) {
+                                mageTemplates.splice(parseInt(templateIndex, 10), 1);
+                                renderMageTemplateTable();
+                            }
+                        }
+                    });
+                    
+                    UIElements.addNewItemModalBtn.addEventListener('click', () => {
+                        const name = document.getElementById('newItemName').value.trim();
+                        if (!name) { alert('Please enter an item name.'); return; }
+                        const requirements = {};
+                        const boosts = {};
+                        PATH_KEYS.forEach(pathKey => {
+                            requirements[pathKey] = parseInt(document.getElementById(`newItemPath${pathKey}`).value) || 0;
+                            boosts[pathKey] = parseInt(document.getElementById(`newItemBoost${pathKey}`).value) || 0;
+                        });
+                        items.push({ id: `item_${nextItemId++}`, name, requirements, boosts, isActive: true });
+                        document.getElementById('newItemName').value = '';
+                        PATH_KEYS.forEach(pathKey => {
+                             document.getElementById(`newItemPath${pathKey}`).value = 0;
+                             document.getElementById(`newItemBoost${pathKey}`).value = 0;
+                        });
+                        renderItemsTable();
+                    });
+    
+                    UIElements.itemManagementTableBody.addEventListener('input', (event) => {
+                        const target = event.target;
+                        const itemId = target.closest('tr')?.dataset.itemId;
+                        if (!itemId) return;
+                        const item = getItemById(itemId);
+                        if (!item) return;
+                        if (target.type === 'checkbox' && target.classList.contains('item-active-checkbox')) {
+                            item.isActive = target.checked;
+                        } else if (target.dataset.type === 'name') {
+                            item.name = target.value;
+                        } else if (target.type === 'number' && target.dataset.pathKey) {
+                            const pathKey = target.dataset.pathKey;
+                            const value = parseInt(target.value, 10) || 0;
+                            if (target.dataset.type === 'requirement') {
+                                item.requirements[pathKey] = value;
+                            } else if (target.dataset.type === 'boost') {
+                                item.boosts = item.boosts || {};
+                                item.boosts[pathKey] = value;
+                            }
+                        }
+                    });
+                    
+                    UIElements.itemManagementTableBody.addEventListener('click', (event) => {
+                        if (event.target.classList.contains('remove-item-btn')) {
+                            const rowElement = event.target.closest('tr');
+                            const itemId = rowElement?.dataset.itemId;
+                            if (itemId) {
+                                if (confirm(`Are you sure you want to permanently delete "${getItemById(itemId).name}"?`)) {
+                                    items = items.filter(item => item.id !== itemId);
+                                    mages.forEach(mage => {
+                                        mage.equippedItems = (mage.equippedItems || []).filter(eqId => eqId !== itemId);
+                                    });
+                                    renderItemsTable();
+                                }
+                            }
+                        }
+                    });
+    
+                    UIElements.saveStateBtn.addEventListener('click', () => {
+                        if (!window.originalFileStructure) {
+                            alert("Error: Cannot save. Original file structure not found.");
+                            return;
+                        }
+
+                        const { templateHTML, bootstrapperHTML } = window.originalFileStructure;
+
+                        const cleanMagesForSave = mages.map(({ randomOutcomes, ...rest }) => rest);
+                        const magesJSON = JSON.stringify(cleanMagesForSave, null, 4);
+                        const itemsJSON = JSON.stringify(items, null, 4);
+                        const templatesJSON = JSON.stringify(mageTemplates, null, 4);
+
+                        let newBootstrapperText = bootstrapperHTML;
+                        newBootstrapperText = newBootstrapperText.replace(/const initialMages = \[.*?\];/s, `const initialMages = ${magesJSON};`);
+                        newBootstrapperText = newBootstrapperText.replace(/const initialItems = \[.*?\];/s, `const initialItems = ${itemsJSON};`);
+                        newBootstrapperText = newBootstrapperText.replace(/const initialTemplates = \[.*?\];/s, `const initialTemplates = ${templatesJSON};`);
+
+                        const newFileContent = `<html lang="en"><head>
+    <meta charset="UTF-8">
+    <title>Loading Dominions Comparator...</title>
+</head>
+<body>
+
+<template id="app-template">${templateHTML}</template>
+
+<script>${newBootstrapperText}<\/script>
+
+</body></html>`;
+
+                        const blob = new Blob([newFileContent], { type: 'text/html;charset=utf-8' });
+                        const a = document.createElement('a');
+                        const timestamp = new Date().toISOString().replace(/[:.-]/g, '');
+                        a.download = `dominions_comparator_${timestamp}.html`;
+                        a.href = URL.createObjectURL(blob);
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(a.href);
+                        console.log('State saved successfully.');
+                    });
+                }
+            }(magesData, itemsData, templatesData));
+        </script>        
+    
+</template>
+
+<script>
+    // --- BOOTSTRAPPER SCRIPT ---
+    const initialMages = [
+    {
+        "id": "mage_0",
+        "name": "Enkidu Shaman",
+        "paths": {
+            "F": 0,
+            "A": 0,
+            "W": 0,
+            "E": 1,
+            "S": 0,
+            "D": 0,
+            "N": 2,
+            "B": 0,
+            "G": 0,
+            "H": 0
+        },
+        "isActive": true,
+        "equippedItems": [
+            "item_3"
+        ],
+        "randomPicks": [],
+        "selectedOutcomeIndex": 0
+    },
+    {
+        "id": "mage_1",
+        "name": "Entu",
+        "paths": {
+            "F": 0,
+            "A": 0,
+            "W": 1,
+            "E": 0,
+            "S": 2,
+            "D": 0,
+            "N": 0,
+            "B": 0,
+            "G": 0,
+            "H": 3
+        },
+        "isActive": true,
+        "equippedItems": [
+            "item_22"
+        ],
+        "randomPicks": [
+            {
+                "chance": 100,
+                "level": 1,
+                "paths": [
+                    "W",
+                    "E",
+                    "S",
+                    "N"
+                ]
+            },
+            {
+                "chance": 10,
+                "level": 1,
+                "paths": [
+                    "W",
+                    "E",
+                    "S",
+                    "N"
+                ]
+            }
+        ],
+        "selectedOutcomeIndex": 0
+    },
+    {
+        "id": "mage_2",
+        "name": "Mashmashu",
+        "paths": {
+            "F": 0,
+            "A": 0,
+            "W": 0,
+            "E": 0,
+            "S": 3,
+            "D": 0,
+            "N": 1,
+            "B": 0,
+            "G": 0,
+            "H": 0
+        },
+        "isActive": true,
+        "equippedItems": [],
+        "randomPicks": [
+            {
+                "chance": 100,
+                "level": 1,
+                "paths": [
+                    "A",
+                    "W",
+                    "E",
+                    "S"
+                ]
+            },
+            {
+                "chance": 10,
+                "level": 1,
+                "paths": [
+                    "A",
+                    "W",
+                    "E",
+                    "S"
+                ]
+            }
+        ],
+        "selectedOutcomeIndex": 0
+    },
+    {
+        "id": "mage_3",
+        "name": "Ensi",
+        "paths": {
+            "F": 0,
+            "A": 0,
+            "W": 1,
+            "E": 0,
+            "S": 0,
+            "D": 0,
+            "N": 1,
+            "B": 0,
+            "G": 0,
+            "H": 0
+        },
+        "isActive": true,
+        "equippedItems": [],
+        "randomPicks": [
+            {
+                "chance": 100,
+                "level": 1,
+                "paths": [
+                    "W",
+                    "E",
+                    "S",
+                    "N"
+                ]
+            }
+        ],
+        "selectedOutcomeIndex": 0
+    },
+    {
+        "id": "mage_4",
+        "name": "Ishib",
+        "paths": {
+            "F": 0,
+            "A": 1,
+            "W": 2,
+            "E": 1,
+            "S": 0,
+            "D": 0,
+            "N": 1,
+            "B": 0,
+            "G": 0,
+            "H": 0
+        },
+        "isActive": true,
+        "equippedItems": [],
+        "randomPicks": [],
+        "selectedOutcomeIndex": 0
+    },
+    {
+        "id": "mage_5",
+        "name": "Ugallu",
+        "paths": {
+            "F": 0,
+            "A": 3,
+            "W": 0,
+            "E": 0,
+            "S": 0,
+            "D": 0,
+            "N": 0,
+            "B": 0,
+            "G": 0,
+            "H": 0
+        },
+        "isActive": true,
+        "equippedItems": [],
+        "randomPicks": [],
+        "selectedOutcomeIndex": 0
+    },
+    {
+        "id": "mage_6",
+        "name": "Umu-apkallu (con8)",
+        "paths": {
+            "F": 0,
+            "A": 3,
+            "W": 3,
+            "E": 2,
+            "S": 4,
+            "D": 0,
+            "N": 2,
+            "B": 0,
+            "G": 0,
+            "H": 0
+        },
+        "isActive": true,
+        "equippedItems": [],
+        "randomPicks": [],
+        "selectedOutcomeIndex": 0
+    },
+    {
+        "id": "mage_7",
+        "name": "Uruk disciple",
+        "paths": {
+            "F": 4,
+            "A": 0,
+            "W": 0,
+            "E": 0,
+            "S": 0,
+            "D": 0,
+            "N": 4,
+            "B": 0,
+            "G": 1,
+            "H": 0
+        },
+        "isActive": true,
+        "equippedItems": [],
+        "randomPicks": [],
+        "selectedOutcomeIndex": 0
+    },
+    {
+        "id": "mage_8",
+        "name": "Sage-Queen",
+        "paths": {
+            "F": 1,
+            "A": 0,
+            "W": 0,
+            "E": 0,
+            "S": 3,
+            "D": 0,
+            "N": 0,
+            "B": 0,
+            "G": 3,
+            "H": 2
+        },
+        "isActive": true,
+        "equippedItems": [],
+        "randomPicks": [
+            {
+                "chance": 10,
+                "level": 1,
+                "paths": [
+                    "F",
+                    "W",
+                    "S",
+                    "N",
+                    "G"
+                ]
+            }
+        ],
+        "selectedOutcomeIndex": 0
+    },
+    {
+        "id": "mage_9",
+        "name": "Feminie Sorceress",
+        "paths": {
+            "F": 2,
+            "A": 0,
+            "W": 0,
+            "E": 0,
+            "S": 2,
+            "D": 0,
+            "N": 0,
+            "B": 0,
+            "G": 2,
+            "H": 0
+        },
+        "isActive": true,
+        "equippedItems": [],
+        "randomPicks": [],
+        "selectedOutcomeIndex": 0
+    },
+    {
+        "id": "mage_10",
+        "name": "Loremistress",
+        "paths": {
+            "F": 1,
+            "A": 0,
+            "W": 0,
+            "E": 0,
+            "S": 1,
+            "D": 0,
+            "N": 0,
+            "B": 0,
+            "G": 1,
+            "H": 0
+        },
+        "isActive": true,
+        "equippedItems": [],
+        "randomPicks": [
+            {
+                "chance": 100,
+                "level": 1,
+                "paths": [
+                    "F",
+                    "W",
+                    "S",
+                    "N",
+                    "G"
+                ]
+            },
+            {
+                "chance": 100,
+                "level": 1,
+                "paths": [
+                    "F",
+                    "W",
+                    "S",
+                    "N",
+                    "G"
+                ]
+            }
+        ],
+        "selectedOutcomeIndex": 0
+    },
+    {
+        "id": "mage_11",
+        "name": "King of Lost Tribe",
+        "paths": {
+            "F": 0,
+            "A": 0,
+            "W": 0,
+            "E": 0,
+            "S": 0,
+            "D": 0,
+            "N": 0,
+            "B": 0,
+            "G": 0,
+            "H": 0
+        },
+        "isActive": true,
+        "equippedItems": [],
+        "randomPicks": [
+            {
+                "chance": 100,
+                "level": 1,
+                "paths": [
+                    "F",
+                    "E",
+                    "S"
+                ]
+            },
+            {
+                "chance": 100,
+                "level": 1,
+                "paths": [
+                    "F",
+                    "E",
+                    "S"
+                ]
+            }
+        ],
+        "selectedOutcomeIndex": 0
+    },
+    {
+        "id": "mage_12",
+        "name": "Talmai Elder",
+        "paths": {
+            "F": 0,
+            "A": 0,
+            "W": 0,
+            "E": 0,
+            "S": 0,
+            "D": 0,
+            "N": 0,
+            "B": 0,
+            "G": 0,
+            "H": 0
+        },
+        "isActive": true,
+        "equippedItems": [],
+        "randomPicks": [
+            {
+                "chance": 100,
+                "level": 3,
+                "paths": [
+                    "F",
+                    "E",
+                    "S"
+                ]
+            },
+            {
+                "chance": 10,
+                "level": 1,
+                "paths": [
+                    "F",
+                    "E",
+                    "S",
+                    "D"
+                ]
+            }
+        ],
+        "selectedOutcomeIndex": 0
+    },
+    {
+        "id": "mage_13",
+        "name": "Zamzummite",
+        "paths": {
+            "F": 0,
+            "A": 0,
+            "W": 0,
+            "E": 1,
+            "S": 0,
+            "D": 2,
+            "N": 0,
+            "B": 0,
+            "G": 0,
+            "H": 0
+        },
+        "isActive": true,
+        "equippedItems": [],
+        "randomPicks": [
+            {
+                "chance": 100,
+                "level": 1,
+                "paths": [
+                    "E",
+                    "D"
+                ]
+            },
+            {
+                "chance": 100,
+                "level": 1,
+                "paths": [
+                    "F",
+                    "E",
+                    "S",
+                    "D"
+                ]
+            }
+        ],
+        "selectedOutcomeIndex": 7
+    },
+    {
+        "id": "mage_14",
+        "name": "Grand Thaum",
+        "paths": {
+            "F": 0,
+            "A": 0,
+            "W": 0,
+            "E": 0,
+            "S": 2,
+            "D": 2,
+            "N": 0,
+            "B": 0,
+            "G": 0,
+            "H": 0
+        },
+        "isActive": true,
+        "equippedItems": [],
+        "randomPicks": [
+            {
+                "chance": 100,
+                "level": 1,
+                "paths": [
+                    "A",
+                    "W",
+                    "S",
+                    "D"
+                ]
+            },
+            {
+                "chance": 10,
+                "level": 1,
+                "paths": [
+                    "A",
+                    "W",
+                    "S",
+                    "D"
+                ]
+            }
+        ],
+        "selectedOutcomeIndex": 3
+    },
+    {
+        "id": "mage_15",
+        "name": "Pretender",
+        "paths": {
+            "F": 8,
+            "A": 0,
+            "W": 0,
+            "E": 0,
+            "S": 6,
+            "D": 0,
+            "N": 0,
+            "B": 0,
+            "G": 0,
+            "H": 0
+        },
+        "isActive": true,
+        "equippedItems": [],
+        "randomPicks": [],
+        "selectedOutcomeIndex": 0
+    }
+];
+    const initialItems = [
+    {
+        "id": "item_3",
+        "name": "Earth Boots",
+        "requirements": {
+            "F": 0,
+            "A": 0,
+            "W": 0,
+            "E": 2,
+            "S": 0,
+            "D": 0,
+            "N": 0,
+            "B": 0,
+            "G": 0,
+            "H": 0
+        },
+        "boosts": {
+            "F": 0,
+            "A": 0,
+            "W": 0,
+            "E": 1,
+            "S": 0,
+            "D": 0,
+            "N": 0,
+            "B": 0,
+            "G": 0,
+            "H": 0
+        },
+        "isActive": true
+    },
+    {
+        "id": "item_6",
+        "name": "Blood Thorn ",
+        "requirements": {
+            "F": 0,
+            "A": 0,
+            "W": 0,
+            "E": 0,
+            "S": 0,
+            "D": 0,
+            "N": 1,
+            "B": 2,
+            "G": 0,
+            "H": 0
+        },
+        "boosts": {
+            "F": 0,
+            "A": 0,
+            "W": 0,
+            "E": 0,
+            "S": 0,
+            "D": 0,
+            "N": 0,
+            "B": 0,
+            "G": 0,
+            "H": 0
+        },
+        "isActive": false
+    },
+    {
+        "id": "item_10",
+        "name": "Skull staff",
+        "requirements": {
+            "F": 0,
+            "A": 0,
+            "W": 0,
+            "E": 0,
+            "S": 0,
+            "D": 2,
+            "N": 0,
+            "B": 0,
+            "G": 0,
+            "H": 0
+        },
+        "boosts": {
+            "D": 1,
+            "F": 0,
+            "A": 0,
+            "W": 0,
+            "E": 0,
+            "S": 0,
+            "N": 0,
+            "B": 0,
+            "G": 0,
+            "H": 0
+        },
+        "isActive": true
+    },
+    {
+        "id": "item_13",
+        "name": "Ring of the False Prophet (+H1)",
+        "requirements": {
+            "F": 2,
+            "A": 0,
+            "W": 0,
+            "E": 0,
+            "S": 0,
+            "D": 0,
+            "N": 0,
+            "B": 0,
+            "G": 4,
+            "H": 0
+        },
+        "boosts": {
+            "H": 1,
+            "F": 0,
+            "A": 0,
+            "W": 0,
+            "E": 0,
+            "S": 0,
+            "D": 0,
+            "N": 0,
+            "B": 0,
+            "G": 0
+        },
+        "isActive": true
+    },
+    {
+        "id": "item_14",
+        "name": "Ring of Wizardry",
+        "requirements": {
+            "S": 7
+        },
+        "boosts": {
+            "S": 1,
+            "F": 1,
+            "A": 1,
+            "W": 1,
+            "E": 1,
+            "D": 1,
+            "N": 1,
+            "B": 1,
+            "G": 1,
+            "H": 0
+        },
+        "isActive": true
+    },
+    {
+        "id": "item_15",
+        "name": "Robe of the Magi",
+        "requirements": {
+            "A": 5,
+            "B": 5
+        },
+        "boosts": {
+            "S": 1,
+            "F": 0,
+            "A": 0,
+            "W": 0,
+            "E": 0,
+            "D": 0,
+            "N": 0,
+            "B": 0,
+            "G": 0,
+            "H": 0
+        },
+        "isActive": true
+    },
+    {
+        "id": "item_16",
+        "name": "Staff of Elem. mastery",
+        "requirements": {
+            "F": 4,
+            "W": 4
+        },
+        "boosts": {
+            "F": 1,
+            "W": 1,
+            "A": 1,
+            "E": 1,
+            "S": 0,
+            "D": 0,
+            "N": 0,
+            "B": 0,
+            "G": 0,
+            "H": 0
+        },
+        "isActive": true
+    },
+    {
+        "id": "item_17",
+        "name": "Staff of Elem. Mastery A/E",
+        "requirements": {
+            "A": 4,
+            "E": 4
+        },
+        "boosts": {
+            "A": 1,
+            "E": 1,
+            "F": 1,
+            "W": 1,
+            "S": 0,
+            "D": 0,
+            "N": 0,
+            "B": 0,
+            "G": 0,
+            "H": 0
+        },
+        "isActive": true
+    },
+    {
+        "id": "item_18",
+        "name": "Flame Helmet",
+        "requirements": {
+            "F": 4
+        },
+        "boosts": {
+            "F": 1,
+            "A": 0,
+            "W": 0,
+            "E": 0,
+            "S": 0,
+            "D": 0,
+            "N": 0,
+            "B": 0,
+            "G": 0,
+            "H": 0
+        },
+        "isActive": true
+    },
+    {
+        "id": "item_19",
+        "name": "Skull of Fire",
+        "requirements": {
+            "F": 1,
+            "D": 1
+        },
+        "boosts": {
+            "F": 1,
+            "D": 0,
+            "A": 0,
+            "W": 0,
+            "E": 0,
+            "S": 0,
+            "N": 0,
+            "B": 0,
+            "G": 0,
+            "H": 0
+        },
+        "isActive": true
+    },
+    {
+        "id": "item_20",
+        "name": "Horn of Storms",
+        "requirements": {
+            "A": 5
+        },
+        "boosts": {
+            "A": 1,
+            "F": 0,
+            "W": 0,
+            "E": 0,
+            "S": 0,
+            "D": 0,
+            "N": 0,
+            "B": 0,
+            "G": 0,
+            "H": 0
+        },
+        "isActive": true
+    },
+    {
+        "id": "item_21",
+        "name": "Winged Helmet",
+        "requirements": {
+            "A": 4
+        },
+        "boosts": {
+            "A": 1,
+            "F": 0,
+            "W": 0,
+            "E": 0,
+            "S": 0,
+            "D": 0,
+            "N": 0,
+            "B": 0,
+            "G": 0,
+            "H": 0
+        },
+        "isActive": true
+    },
+    {
+        "id": "item_22",
+        "name": "Robe of the Sea",
+        "requirements": {
+            "W": 3
+        },
+        "boosts": {
+            "W": 1,
+            "F": 0,
+            "A": 0,
+            "E": 0,
+            "S": 0,
+            "D": 0,
+            "N": 0,
+            "B": 0,
+            "G": 0,
+            "H": 0
+        },
+        "isActive": true
+    },
+    {
+        "id": "item_23",
+        "name": "Water Bracelet",
+        "requirements": {
+            "W": 1
+        },
+        "boosts": {
+            "W": 1,
+            "F": 0,
+            "A": 0,
+            "E": 0,
+            "S": 0,
+            "D": 0,
+            "N": 0,
+            "B": 0,
+            "G": 0,
+            "H": 0
+        },
+        "isActive": true
+    },
+    {
+        "id": "item_24",
+        "name": "Blood Stone",
+        "requirements": {
+            "E": 2,
+            "B": 3
+        },
+        "boosts": {
+            "E": 1,
+            "B": 1,
+            "F": 0,
+            "A": 0,
+            "W": 0,
+            "S": 0,
+            "D": 0,
+            "N": 0,
+            "G": 0,
+            "H": 0
+        },
+        "isActive": true
+    },
+    {
+        "id": "item_25",
+        "name": "Coin of Meteoritic Iron",
+        "requirements": {
+            "E": 2,
+            "S": 2
+        },
+        "boosts": {
+            "E": 1,
+            "S": 1,
+            "F": 0,
+            "A": 0,
+            "W": 0,
+            "D": 0,
+            "N": 0,
+            "B": 0,
+            "G": 0,
+            "H": 0
+        },
+        "isActive": true
+    },
+    {
+        "id": "item_26",
+        "name": "Starshine Skullcap",
+        "requirements": {
+            "S": 2
+        },
+        "boosts": {
+            "S": 1,
+            "F": 0,
+            "A": 0,
+            "W": 0,
+            "E": 0,
+            "D": 0,
+            "N": 0,
+            "B": 0,
+            "G": 0,
+            "H": 0
+        },
+        "isActive": true
+    },
+    {
+        "id": "item_27",
+        "name": "Skullface",
+        "requirements": {
+            "D": 5
+        },
+        "boosts": {
+            "D": 1,
+            "F": 0,
+            "A": 0,
+            "W": 0,
+            "E": 0,
+            "S": 0,
+            "N": 0,
+            "B": 0,
+            "G": 0,
+            "H": 0
+        },
+        "isActive": true
+    },
+    {
+        "id": "item_28",
+        "name": "Treelord staff",
+        "requirements": {
+            "N": 5
+        },
+        "boosts": {
+            "N": 2,
+            "F": 0,
+            "A": 0,
+            "W": 0,
+            "E": 0,
+            "S": 0,
+            "D": 0,
+            "B": 0,
+            "G": 0,
+            "H": 0
+        },
+        "isActive": true
+    },
+    {
+        "id": "item_29",
+        "name": "Moonvine bracelet",
+        "requirements": {
+            "S": 1,
+            "N": 3
+        },
+        "boosts": {
+            "S": 1,
+            "N": 0,
+            "F": 0,
+            "A": 0,
+            "W": 0,
+            "E": 0,
+            "D": 0,
+            "B": 0,
+            "G": 0,
+            "H": 0
+        },
+        "isActive": true
+    },
+    {
+        "id": "item_30",
+        "name": "Thistle Mace",
+        "requirements": {
+            "N": 2
+        },
+        "boosts": {
+            "N": 1,
+            "F": 0,
+            "A": 0,
+            "W": 0,
+            "E": 0,
+            "S": 0,
+            "D": 0,
+            "B": 0,
+            "G": 0,
+            "H": 0
+        },
+        "isActive": true
+    },
+    {
+        "id": "item_32",
+        "name": "Gossamer Veil",
+        "requirements": {
+            "G": 3
+        },
+        "boosts": {
+            "G": 1,
+            "F": 0,
+            "A": 0,
+            "W": 0,
+            "E": 0,
+            "S": 0,
+            "D": 0,
+            "N": 0,
+            "B": 0,
+            "H": 0
+        },
+        "isActive": true
+    },
+    {
+        "id": "item_33",
+        "name": "Mirage Crystal",
+        "requirements": {
+            "E": 2,
+            "G": 3
+        },
+        "boosts": {
+            "E": 0,
+            "G": 1,
+            "F": 0,
+            "A": 0,
+            "W": 0,
+            "S": 0,
+            "D": 0,
+            "N": 0,
+            "B": 0,
+            "H": 0
+        },
+        "isActive": true
+    },
+    {
+        "id": "item_34",
+        "name": "Armor of Twisting Thorns",
+        "requirements": {
+            "N": 2,
+            "B": 3
+        },
+        "boosts": {
+            "N": 1,
+            "B": 1,
+            "F": 0,
+            "A": 0,
+            "W": 0,
+            "E": 0,
+            "S": 0,
+            "D": 0,
+            "G": 0,
+            "H": 0
+        },
+        "isActive": true
+    },
+    {
+        "id": "item_35",
+        "name": "Armor of Souls",
+        "requirements": {
+            "B": 5
+        },
+        "boosts": {
+            "B": 1,
+            "F": 0,
+            "A": 0,
+            "W": 0,
+            "E": 0,
+            "S": 0,
+            "D": 0,
+            "N": 0,
+            "G": 0,
+            "H": 0
+        },
+        "isActive": true
+    },
+    {
+        "id": "item_36",
+        "name": "Blood Thorn",
+        "requirements": {
+            "B": 3
+        },
+        "boosts": {
+            "B": 1,
+            "F": 0,
+            "A": 0,
+            "W": 0,
+            "E": 0,
+            "S": 0,
+            "D": 0,
+            "N": 0,
+            "G": 0,
+            "H": 0
+        },
+        "isActive": true
+    },
+    {
+        "id": "item_37",
+        "name": "Brazen Vessel",
+        "requirements": {
+            "B": 5
+        },
+        "boosts": {
+            "B": 1,
+            "F": 0,
+            "A": 0,
+            "W": 0,
+            "E": 0,
+            "S": 0,
+            "D": 0,
+            "N": 0,
+            "G": 0,
+            "H": 0
+        },
+        "isActive": true
+    },
+    {
+        "id": "item_38",
+        "name": "Ring of Sorcery",
+        "requirements": {
+            "F": 0,
+            "A": 0,
+            "W": 0,
+            "E": 0,
+            "S": 6,
+            "D": 0,
+            "N": 0,
+            "B": 0,
+            "G": 0,
+            "H": 0
+        },
+        "boosts": {
+            "F": 0,
+            "A": 0,
+            "W": 0,
+            "E": 0,
+            "S": 1,
+            "D": 1,
+            "N": 1,
+            "B": 0,
+            "G": 1,
+            "H": 0
+        },
+        "isActive": true
+    }
+];
+    const initialTemplates = [
+    {
+        "name": "Enkidu Shaman",
+        "paths": {
+            "F": 0,
+            "A": 0,
+            "W": 0,
+            "E": 1,
+            "S": 0,
+            "D": 0,
+            "N": 2,
+            "B": 0,
+            "G": 0,
+            "H": 0
+        },
+        "randomPicks": []
+    },
+    {
+        "name": "Entu",
+        "paths": {
+            "F": 0,
+            "A": 0,
+            "W": 1,
+            "E": 0,
+            "S": 2,
+            "D": 0,
+            "N": 0,
+            "B": 0,
+            "G": 0,
+            "H": 3
+        },
+        "randomPicks": [
+            {
+                "chance": 100,
+                "level": 1,
+                "paths": [
+                    "W",
+                    "E",
+                    "S",
+                    "N"
+                ]
+            },
+            {
+                "chance": 10,
+                "level": 1,
+                "paths": [
+                    "W",
+                    "E",
+                    "S",
+                    "N"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Mashmashu",
+        "paths": {
+            "F": 0,
+            "A": 0,
+            "W": 0,
+            "E": 0,
+            "S": 3,
+            "D": 0,
+            "N": 1,
+            "B": 0,
+            "G": 0,
+            "H": 0
+        },
+        "randomPicks": [
+            {
+                "chance": 100,
+                "level": 1,
+                "paths": [
+                    "A",
+                    "W",
+                    "E",
+                    "S"
+                ]
+            },
+            {
+                "chance": 10,
+                "level": 1,
+                "paths": [
+                    "A",
+                    "W",
+                    "E",
+                    "S"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Ensi",
+        "paths": {
+            "F": 0,
+            "A": 0,
+            "W": 1,
+            "E": 0,
+            "S": 0,
+            "D": 0,
+            "N": 1,
+            "B": 0,
+            "G": 0,
+            "H": 0
+        },
+        "randomPicks": [
+            {
+                "chance": 100,
+                "level": 1,
+                "paths": [
+                    "W",
+                    "E",
+                    "S",
+                    "N"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Ishib",
+        "paths": {
+            "F": 0,
+            "A": 1,
+            "W": 2,
+            "E": 1,
+            "S": 0,
+            "D": 0,
+            "N": 1,
+            "B": 0,
+            "G": 0,
+            "H": 0
+        },
+        "randomPicks": []
+    },
+    {
+        "name": "Ugallu",
+        "paths": {
+            "F": 0,
+            "A": 3,
+            "W": 0,
+            "E": 0,
+            "S": 0,
+            "D": 0,
+            "N": 0,
+            "B": 0,
+            "G": 0,
+            "H": 0
+        },
+        "randomPicks": []
+    },
+    {
+        "name": "Umu-apkallu (con8)",
+        "paths": {
+            "F": 0,
+            "A": 3,
+            "W": 3,
+            "E": 2,
+            "S": 4,
+            "D": 0,
+            "N": 2,
+            "B": 0,
+            "G": 0,
+            "H": 0
+        },
+        "randomPicks": []
+    },
+    {
+        "name": "Uruk disciple",
+        "paths": {
+            "F": 4,
+            "A": 0,
+            "W": 0,
+            "E": 0,
+            "S": 0,
+            "D": 0,
+            "N": 4,
+            "B": 0,
+            "G": 1,
+            "H": 0
+        },
+        "randomPicks": []
+    },
+    {
+        "name": "Sage-Queen",
+        "paths": {
+            "F": 1,
+            "A": 0,
+            "W": 0,
+            "E": 0,
+            "S": 3,
+            "D": 0,
+            "N": 0,
+            "B": 0,
+            "G": 3,
+            "H": 2
+        },
+        "randomPicks": [
+            {
+                "chance": 10,
+                "level": 1,
+                "paths": [
+                    "F",
+                    "W",
+                    "S",
+                    "N",
+                    "G"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Loremistress",
+        "paths": {
+            "F": 1,
+            "A": 0,
+            "W": 0,
+            "E": 0,
+            "S": 1,
+            "D": 0,
+            "N": 0,
+            "B": 0,
+            "G": 1,
+            "H": 0
+        },
+        "randomPicks": [
+            {
+                "chance": 100,
+                "level": 1,
+                "paths": [
+                    "F",
+                    "W",
+                    "S",
+                    "N",
+                    "G"
+                ]
+            },
+            {
+                "chance": 100,
+                "level": 1,
+                "paths": [
+                    "F",
+                    "W",
+                    "S",
+                    "N",
+                    "G"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "King of Lost Tribe",
+        "paths": {
+            "F": 0,
+            "A": 0,
+            "W": 0,
+            "E": 0,
+            "S": 0,
+            "D": 0,
+            "N": 0,
+            "B": 0,
+            "G": 0,
+            "H": 0
+        },
+        "randomPicks": [
+            {
+                "chance": 100,
+                "level": 1,
+                "paths": [
+                    "F",
+                    "E",
+                    "S"
+                ]
+            },
+            {
+                "chance": 100,
+                "level": 1,
+                "paths": [
+                    "F",
+                    "E",
+                    "S"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Feminie Sorceress",
+        "paths": {
+            "F": 2,
+            "A": 0,
+            "W": 0,
+            "E": 0,
+            "S": 2,
+            "D": 0,
+            "N": 0,
+            "B": 0,
+            "G": 2,
+            "H": 0
+        },
+        "randomPicks": []
+    },
+    {
+        "name": "Talmai Elder",
+        "paths": {
+            "F": 0,
+            "A": 0,
+            "W": 0,
+            "E": 0,
+            "S": 0,
+            "D": 0,
+            "N": 0,
+            "B": 0,
+            "G": 0,
+            "H": 0
+        },
+        "randomPicks": [
+            {
+                "chance": 100,
+                "level": 3,
+                "paths": [
+                    "F",
+                    "E",
+                    "S"
+                ]
+            },
+            {
+                "chance": 10,
+                "level": 1,
+                "paths": [
+                    "F",
+                    "E",
+                    "S",
+                    "D"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Zamzummite",
+        "paths": {
+            "F": 0,
+            "A": 0,
+            "W": 0,
+            "E": 1,
+            "S": 0,
+            "D": 2,
+            "N": 0,
+            "B": 0,
+            "G": 0,
+            "H": 0
+        },
+        "randomPicks": [
+            {
+                "chance": 100,
+                "level": 1,
+                "paths": [
+                    "E",
+                    "D"
+                ]
+            },
+            {
+                "chance": 100,
+                "level": 1,
+                "paths": [
+                    "F",
+                    "E",
+                    "S",
+                    "D"
+                ]
+            }
+        ]
+    },
+    {
+        "name": "Grand Thaum",
+        "paths": {
+            "F": 0,
+            "A": 0,
+            "W": 0,
+            "E": 0,
+            "S": 2,
+            "D": 2,
+            "N": 0,
+            "B": 0,
+            "G": 0,
+            "H": 0
+        },
+        "randomPicks": [
+            {
+                "chance": 100,
+                "level": 1,
+                "paths": [
+                    "A",
+                    "W",
+                    "S",
+                    "D"
+                ]
+            },
+            {
+                "chance": 10,
+                "level": 1,
+                "paths": [
+                    "A",
+                    "W",
+                    "S",
+                    "D"
+                ]
+            }
+        ]
+    }
+];
+
+    (function() {
+        const templateNode = document.getElementById('app-template');
+        if (!templateNode) {
+            console.error("Application template not found. Cannot boot.");
+            return;
+        }
+
+        // Store the original file structure on the window object so the save function can access it later.
+        // The save function will reconstruct the file from these clean parts, instead of using the messy live DOM.
+        window.originalFileStructure = {
+            templateHTML: templateNode.innerHTML,
+            bootstrapperHTML: document.currentScript.innerHTML
+        };
+
+        let templateHtml = templateNode.innerHTML;
+        
+        // This is a neat trick. The script inside the template has placeholders.
+        // We can grab them with a regex, and if it's a saved file, JSON.parse will work.
+        // If it's a fresh file, JSON.parse will fail on the placeholder text, and we use the defaults.
+        let magesData, itemsData, templatesData;
+        try {
+            const magesMatch = /__MAGES_JSON_HERE__/.exec(templateHtml);
+            magesData = JSON.parse(magesMatch[0]);
+        } catch (e) {
+            magesData = initialMages;
+        }
+         try {
+            const itemsMatch = /__ITEMS_JSON_HERE__/.exec(templateHtml);
+            itemsData = JSON.parse(itemsMatch[0]);
+        } catch (e) {
+            itemsData = initialItems;
+        }
+         try {
+            const templatesMatch = /__TEMPLATES_JSON_HERE__/.exec(templateHtml);
+            templatesData = JSON.parse(templatesMatch[0]);
+        } catch (e) {
+            templatesData = initialTemplates;
+        }
+        
+        // Inject the determined data back into the template's script placeholders.
+        templateHtml = templateHtml.replace('__MAGES_JSON_HERE__', JSON.stringify(magesData, null, 4));
+        templateHtml = templateHtml.replace('__ITEMS_JSON_HERE__', JSON.stringify(itemsData, null, 4));
+        templateHtml = templateHtml.replace('__TEMPLATES_JSON_HERE__', JSON.stringify(templatesData, null, 4));
+        
+        // Replace the current blank document with the fully bootstrapped application.
+        document.open();
+        document.write(templateHtml);
+        document.close();
+    })();
+</script>
+
+</body></html>
