@@ -167,6 +167,8 @@
                 text-align: right;
             }
             .top-buttons button { margin-left: 10px; }
+            #resetStateBtn { background-color: #f0ad4e; }
+            #resetStateBtn:hover { background-color: #ec971f; }
     
             /* Equipment Section */
             #equipItemsSection { margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px; }
@@ -204,7 +206,8 @@
         <div class="top-buttons">
             <button id="manageMagesBtn">Mage Library</button>
             <button id="manageItemsBtn">Manage Items</button>
-            <button id="saveStateBtn">Save State to File</button>
+            <button id="saveStateBtn">Save to Browser</button>
+            <button id="resetStateBtn">Clear & Reset</button>
         </div>
     
         <div class="container">
@@ -819,7 +822,8 @@
                         closeMageLibraryModalBtn: document.getElementById('closeMageLibraryModalBtn'),
                         mageLibraryModal: document.getElementById('mageLibraryModal'),
                         mageTemplateTableBody: document.getElementById('mageTemplateTableBody'),
-                        saveStateBtn: document.getElementById('saveStateBtn')
+                        saveStateBtn: document.getElementById('saveStateBtn'),
+                        resetStateBtn: document.getElementById('resetStateBtn')
                     };
 
                     UIElements.addMageBtn.addEventListener('click', () => {
@@ -1041,45 +1045,28 @@
                     });
     
                     UIElements.saveStateBtn.addEventListener('click', () => {
-                        if (!window.originalFileStructure) {
-                            alert("Error: Cannot save. Original file structure not found.");
-                            return;
+                        if (confirm("This will save the current state (mages, items, library) to your browser's local storage, overwriting any previously saved data. Continue?")) {
+                            try {
+                                const cleanMagesForSave = mages.map(({ randomOutcomes, ...rest }) => rest);
+                                localStorage.setItem('dom6_comparator_mages', JSON.stringify(cleanMagesForSave));
+                                localStorage.setItem('dom6_comparator_items', JSON.stringify(items));
+                                localStorage.setItem('dom6_comparator_templates', JSON.stringify(mageTemplates));
+                                alert('Progress saved successfully to this browser.');
+                            } catch (e) {
+                                console.error('Error saving to localStorage:', e);
+                                alert('Could not save progress. Your browser might be in private mode or storage is full.');
+                            }
                         }
+                    });
 
-                        const { templateHTML, bootstrapperHTML } = window.originalFileStructure;
-
-                        const cleanMagesForSave = mages.map(({ randomOutcomes, ...rest }) => rest);
-                        const magesJSON = JSON.stringify(cleanMagesForSave, null, 4);
-                        const itemsJSON = JSON.stringify(items, null, 4);
-                        const templatesJSON = JSON.stringify(mageTemplates, null, 4);
-
-                        let newBootstrapperText = bootstrapperHTML;
-                        newBootstrapperText = newBootstrapperText.replace(/const initialMages = \[.*?\];/s, `const initialMages = ${magesJSON};`);
-                        newBootstrapperText = newBootstrapperText.replace(/const initialItems = \[.*?\];/s, `const initialItems = ${itemsJSON};`);
-                        newBootstrapperText = newBootstrapperText.replace(/const initialTemplates = \[.*?\];/s, `const initialTemplates = ${templatesJSON};`);
-
-                        const newFileContent = `<html lang="en"><head>
-    <meta charset="UTF-8">
-    <title>Loading Dominions Comparator...</title>
-</head>
-<body>
-
-<template id="app-template">${templateHTML}</template>
-
-<script>${newBootstrapperText}<\/script>
-
-</body></html>`;
-
-                        const blob = new Blob([newFileContent], { type: 'text/html;charset=utf-8' });
-                        const a = document.createElement('a');
-                        const timestamp = new Date().toISOString().replace(/[:.-]/g, '');
-                        a.download = `dominions_comparator_${timestamp}.html`;
-                        a.href = URL.createObjectURL(blob);
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                        URL.revokeObjectURL(a.href);
-                        console.log('State saved successfully.');
+                    UIElements.resetStateBtn.addEventListener('click', () => {
+                        if (confirm('Are you sure you want to clear all data saved in this browser and reset to the default state? This will reload the page.')) {
+                            localStorage.removeItem('dom6_comparator_mages');
+                            localStorage.removeItem('dom6_comparator_items');
+                            localStorage.removeItem('dom6_comparator_templates');
+                            alert('Saved data cleared. The page will now reload with default values.');
+                            window.location.reload();
+                        }
                     });
                 }
             }(magesData, itemsData, templatesData));
@@ -2615,35 +2602,33 @@
             return;
         }
 
-        // Store the original file structure on the window object so the save function can access it later.
-        // The save function will reconstruct the file from these clean parts, instead of using the messy live DOM.
-        window.originalFileStructure = {
-            templateHTML: templateNode.innerHTML,
-            bootstrapperHTML: document.currentScript.innerHTML
-        };
-
         let templateHtml = templateNode.innerHTML;
         
-        // This is a neat trick. The script inside the template has placeholders.
-        // We can grab them with a regex, and if it's a saved file, JSON.parse will work.
-        // If it's a fresh file, JSON.parse will fail on the placeholder text, and we use the defaults.
         let magesData, itemsData, templatesData;
+
+        // Try to load data from localStorage. If it doesn't exist or is invalid, fall back to the default data.
         try {
-            const magesMatch = /__MAGES_JSON_HERE__/.exec(templateHtml);
-            magesData = JSON.parse(magesMatch[0]);
+            const savedMages = localStorage.getItem('dom6_comparator_mages');
+            const savedItems = localStorage.getItem('dom6_comparator_items');
+            const savedTemplates = localStorage.getItem('dom6_comparator_templates');
+            
+            if (savedMages && savedItems && savedTemplates) {
+                console.log("Loading state from localStorage.");
+                magesData = JSON.parse(savedMages);
+                itemsData = JSON.parse(savedItems);
+                templatesData = JSON.parse(savedTemplates);
+            } else {
+                // Fallback to initial data if nothing is in localStorage
+                console.log("No state found in localStorage. Using default data.");
+                magesData = initialMages;
+                itemsData = initialItems;
+                templatesData = initialTemplates;
+            }
         } catch (e) {
+            console.error("Error loading data from localStorage. Resetting to default. Error:", e);
+            // Fallback to initial data on any error (e.g., corrupted data)
             magesData = initialMages;
-        }
-         try {
-            const itemsMatch = /__ITEMS_JSON_HERE__/.exec(templateHtml);
-            itemsData = JSON.parse(itemsMatch[0]);
-        } catch (e) {
             itemsData = initialItems;
-        }
-         try {
-            const templatesMatch = /__TEMPLATES_JSON_HERE__/.exec(templateHtml);
-            templatesData = JSON.parse(templatesMatch[0]);
-        } catch (e) {
             templatesData = initialTemplates;
         }
         
