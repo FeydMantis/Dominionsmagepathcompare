@@ -115,10 +115,14 @@
                 padding: 8px;
                 margin-bottom: 5px;
                 border-radius: 4px;
-                border: 1px solid #eee;
+                border: 2px solid transparent; /* Changed border for highlight transition */
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
+                transition: border-color 0.3s, box-shadow 0.3s, transform 0.2s;
+            }
+            li.item-entry {
+                 cursor: pointer;
             }
             li.mage-entry .mage-info {
                 flex-grow: 1;
@@ -144,6 +148,19 @@
             .item-entry.green { background-color: #d4edda; color: #155724; border-color: #c3e6cb; }
             .item-entry.yellow { background-color: #fff3cd; color: #856404; border-color: #ffeeba; }
             .item-entry.red { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+
+            /* New Highlight Styles */
+            li.mage-entry.highlight-green, li.item-entry.highlight-green.selected-item {
+                border-color: #155724;
+                box-shadow: 0 0 6px rgba(21, 87, 36, 0.7);
+            }
+            li.mage-entry.highlight-yellow, li.item-entry.highlight-yellow.selected-item {
+                border-color: #856404;
+                box-shadow: 0 0 6px rgba(133, 100, 4, 0.7);
+            }
+            li.item-entry.selected-item {
+                transform: scale(1.01);
+            }
     
             /* Modal Styles */
             .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); }
@@ -317,10 +334,11 @@
                 // CONSTANTS
                 const PATH_KEYS = ['F', 'A', 'W', 'E', 'S', 'D', 'N', 'B', 'G', 'H'];
     
-                // --- ID Management ---
+                // --- STATE MANAGEMENT ---
                 let nextMageId = 0;
                 let nextItemId = 0;
                 let nextPickId = 0;
+                let selectedItemId = null;
     
                 document.addEventListener('DOMContentLoaded', () => {
                     // This is the main execution block after the document is ready
@@ -572,6 +590,7 @@
                         li.appendChild(actionsDiv);
                         magesList.appendChild(li);
                     });
+                    updateHighlights();
                 }
     
                 function updateComparisonDisplay() {
@@ -580,6 +599,7 @@
                     items.filter(item => item.isActive).forEach(item => {
                         const li = document.createElement('li');
                         li.classList.add('item-entry');
+                        li.dataset.itemId = item.id;
                         const craftability = checkItemCraftability(item);
                         li.classList.add(craftability);
                         const reqString = formatItemRequirements(item);
@@ -588,56 +608,95 @@
                         activeItemsList.appendChild(li);
                     });
                     renderEquipmentForMage(document.getElementById('equipMageSelect').value);
+                    updateHighlights();
                 }
     
                 function checkItemCraftability(item) {
                     const activeMages = mages.filter(m => m.isActive);
                     if (activeMages.length === 0) return 'red';
-                    let canBeGreen = false;
                     let canBeYellow = false;
                     for (const mage of activeMages) {
-                        const effectivePaths = getMageEffectivePaths(mage);
-                        let meetsAllReqsForGreen = true;
-                        let hasAllRequiredPathsForYellow = true;
-                        let atLeastOnePathLowerForYellow = false;
-                        let itemHasRequirements = false;
-                        const baseWithRandom = { ...mage.paths };
-                        if (mage.randomOutcomes && mage.randomOutcomes.length > 0 && mage.selectedOutcomeIndex != null) {
-                            const selectedOutcome = mage.randomOutcomes[mage.selectedOutcomeIndex];
-                            if (selectedOutcome && selectedOutcome.paths) {
-                                PATH_KEYS.forEach(pk => baseWithRandom[pk] = (baseWithRandom[pk] || 0) + (selectedOutcome.paths[pk] || 0));
-                            }
-                        }
-                        for (const pathKey of PATH_KEYS) {
-                            const requiredLevel = item.requirements[pathKey] || 0;
-                            const mageLevel = effectivePaths[pathKey] || 0;
-                            if (requiredLevel > 0) {
-                                itemHasRequirements = true;
-                                if (mageLevel < requiredLevel) {
-                                    meetsAllReqsForGreen = false;
-                                    if ((baseWithRandom[pathKey] || 0) === 0) {
-                                        hasAllRequiredPathsForYellow = false;
-                                        break;
-                                    } else {
-                                         atLeastOnePathLowerForYellow = true;
-                                    }
-                                }
-                             }
-                        }
-                        if (!itemHasRequirements) {
-                           meetsAllReqsForGreen = true;
-                        }
-                        if (meetsAllReqsForGreen) {
-                            canBeGreen = true;
-                            break;
-                        }
-                         if (hasAllRequiredPathsForYellow && atLeastOnePathLowerForYellow) {
-                            canBeYellow = true;
-                        }
+                        const craftStatus = checkMageCraftabilityForItem(mage, item);
+                        if (craftStatus === 'green') return 'green';
+                        if (craftStatus === 'yellow') canBeYellow = true;
                     }
-                    if (canBeGreen) return 'green';
                     if (canBeYellow) return 'yellow';
                     return 'red';
+                }
+
+                function checkMageCraftabilityForItem(mage, item) {
+                    const effectivePaths = getMageEffectivePaths(mage);
+                    let meetsAllReqsForGreen = true;
+                    let hasAllRequiredPathsForYellow = true;
+                    let atLeastOnePathLowerForYellow = false;
+                    let itemHasRequirements = false;
+                    const baseWithRandom = { ...mage.paths };
+                    if (mage.randomOutcomes && mage.randomOutcomes.length > 0 && mage.selectedOutcomeIndex != null) {
+                        const selectedOutcome = mage.randomOutcomes[mage.selectedOutcomeIndex];
+                        if (selectedOutcome && selectedOutcome.paths) {
+                            PATH_KEYS.forEach(pk => baseWithRandom[pk] = (baseWithRandom[pk] || 0) + (selectedOutcome.paths[pk] || 0));
+                        }
+                    }
+                    for (const pathKey of PATH_KEYS) {
+                        const requiredLevel = item.requirements[pathKey] || 0;
+                        const mageLevel = effectivePaths[pathKey] || 0;
+                        if (requiredLevel > 0) {
+                            itemHasRequirements = true;
+                            if (mageLevel < requiredLevel) {
+                                meetsAllReqsForGreen = false;
+                                if ((baseWithRandom[pathKey] || 0) === 0) {
+                                    hasAllRequiredPathsForYellow = false;
+                                    break;
+                                } else {
+                                     atLeastOnePathLowerForYellow = true;
+                                }
+                            }
+                         }
+                    }
+                    if (!itemHasRequirements) {
+                       meetsAllReqsForGreen = true;
+                    }
+                    if (meetsAllReqsForGreen) return 'green';
+                    if (hasAllRequiredPathsForYellow && atLeastOnePathLowerForYellow) return 'yellow';
+                    return 'red';
+                }
+
+                function updateHighlights() {
+                    // Clear all existing highlights first
+                    document.querySelectorAll('#activeItemsList .item-entry, #magesList .mage-entry').forEach(el => {
+                        el.classList.remove('selected-item', 'highlight-green', 'highlight-yellow');
+                    });
+
+                    if (!selectedItemId) return; // Exit if no item is selected
+
+                    const item = getItemById(selectedItemId);
+                    // If selected item was deleted or made inactive, clear selection and exit
+                    if (!item || !item.isActive) {
+                        selectedItemId = null;
+                        return;
+                    }
+
+                    // Highlight the selected item itself
+                    const itemLi = document.querySelector(`#activeItemsList .item-entry[data-item-id="${selectedItemId}"]`);
+                    if (itemLi) {
+                        itemLi.classList.add('selected-item');
+                        if (itemLi.classList.contains('green')) {
+                            itemLi.classList.add('highlight-green');
+                        } else if (itemLi.classList.contains('yellow')) {
+                            itemLi.classList.add('highlight-yellow');
+                        }
+                    }
+
+                    // Highlight the mages
+                    mages.filter(m => m.isActive).forEach(mage => {
+                        const craftStatus = checkMageCraftabilityForItem(mage, item);
+                        if (craftStatus === 'green' || craftStatus === 'yellow') {
+                            const mageLi = document.querySelector(`#magesList .mage-entry[data-mage-id="${mage.id}"]`);
+                            if (mageLi) {
+                                mageLi.classList.add(`highlight-${craftStatus}`);
+                            }
+                        }
+                    });
                 }
     
                 function renderMageSelector() {
@@ -808,6 +867,7 @@
                     const UIElements = {
                         addMageBtn: document.getElementById('addMageBtn'),
                         magesList: document.getElementById('magesList'),
+                        activeItemsList: document.getElementById('activeItemsList'),
                         hasRandomPicksCheck: document.getElementById('hasRandomPicksCheck'),
                         addRandomPickBtn: document.getElementById('addRandomPickBtn'),
                         randomPicksContainer: document.getElementById('randomPicksContainer'),
@@ -898,6 +958,20 @@
                             liElement.querySelector('.mage-path-line').textContent = formatMagePathString(mage);
                             updateComparisonDisplay();
                         }
+                    });
+
+                    UIElements.activeItemsList.addEventListener('click', (event) => {
+                        const li = event.target.closest('li.item-entry');
+                        if (!li) return;
+                        
+                        // Ignore clicks on red items for selection
+                        if (li.classList.contains('red')) {
+                            selectedItemId = null;
+                        } else {
+                            const itemId = li.dataset.itemId;
+                            selectedItemId = (selectedItemId === itemId) ? null : itemId; // Toggle selection
+                        }
+                        updateHighlights();
                     });
                     
                     UIElements.hasRandomPicksCheck.addEventListener('change', () => {
